@@ -432,8 +432,8 @@
                             </div>
                             ${currentUser ? `
                                 <div class="comment-compose">
-                                    <input type="text" id="comment-input-${post.id}" placeholder="Reply to thread..." onkeydown="if(event.key==='Enter') createComment(${post.id})">
-                                    <button onclick="createComment(${post.id})">Reply</button>
+                                    <input type="text" id="comment-input-${post.id}" placeholder="Reply to thread..." onkeydown="if(event.key==='Enter') createComment(this)">
+                                    <button type="button" onclick="createComment(this)">Reply</button>
                                 </div>
                             ` : `<div style="font-size:12px; color:var(--text-muted); margin-top:8px;">Log in to leave a reply.</div>`}
                         </div>
@@ -612,9 +612,17 @@
             }
         }
 
-        async function createComment(parentPostId) {
+        async function createComment(source) {
             if (!token) return alert("Please log in to reply.");
-            const input = document.getElementById(`comment-input-${parentPostId}`);
+            const compose = source?.closest('.comment-compose');
+            const input = source?.tagName === 'INPUT'
+                ? source
+                : compose?.querySelector('input');
+            const parentPostId = input?.id?.replace(/^comment-input-/, '');
+            if (!input || !parentPostId) {
+                console.error('[replies] unable to find reply input', { source, input, parentPostId });
+                return alert("Unable to find the reply input. Please refresh the page.");
+            }
             const content = input.value.trim();
 
             if (!content) return alert("Reply cannot be empty.");
