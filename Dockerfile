@@ -4,7 +4,7 @@ FROM nginx:1.25-alpine
 RUN rm -rf /usr/share/nginx/html/*
 
 # Copy your HTML file into Nginx public directory as index.html
-COPY app.html /usr/share/nginx/html/index.html
+COPY index.html /usr/share/nginx/html/index.html
 
 EXPOSE 80
 
