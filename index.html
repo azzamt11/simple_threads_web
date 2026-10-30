@@ -650,8 +650,9 @@
             const input = source?.tagName === 'INPUT'
                 ? source
                 : compose?.querySelector('input');
-            const parentPostId = input?.id?.replace(/^comment-input-/, '');
-            if (!input || !parentPostId) {
+            const parentPostIdText = input?.id?.replace(/^comment-input-/, '');
+            const parentPostId = Number(parentPostIdText);
+            if (!input || !parentPostIdText || !Number.isInteger(parentPostId) || parentPostId <= 0) {
                 console.error('[replies] unable to find reply input', { source, input, parentPostId });
                 return alert("Unable to find the reply input. Please refresh the page.");
             }
