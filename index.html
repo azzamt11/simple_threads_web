@@ -220,6 +220,17 @@
             padding: 6px 12px;
         }
 
+        .comment-compose button[data-reply-button="true"] {
+            background: #ff453a;
+            color: #ffffff;
+            border: 1px solid #ff453a;
+            cursor: pointer;
+        }
+
+        .comment-compose button[data-reply-button="true"]:hover {
+            background: #ff6b63;
+        }
+
         .auth-switch-link {
             color: #2997ff;
             cursor: pointer;
@@ -433,7 +444,7 @@
                             ${currentUser ? `
                                 <div class="comment-compose">
                                     <input type="text" id="comment-input-${post.id}" placeholder="Reply to thread..." onkeydown="if(event.key==='Enter') createComment(this)">
-                                    <button type="button" onclick="createComment(this)">Reply</button>
+                                    <button type="button" data-reply-button="true" onclick="createComment(this)">Reply</button>
                                 </div>
                             ` : `<div style="font-size:12px; color:var(--text-muted); margin-top:8px;">Log in to leave a reply.</div>`}
                         </div>
@@ -618,6 +629,11 @@
                 trigger: clickedButton ? 'button' : 'enter-key',
                 inputId: source?.tagName === 'INPUT' ? source.id : undefined
             });
+            if (clickedButton) {
+                clickedButton.style.background = '#ffd60a';
+                clickedButton.style.color = '#000000';
+                clickedButton.textContent = 'Clicked!';
+            }
             if (!token) return alert("Please log in to reply.");
             const compose = source?.closest('.comment-compose');
             const input = source?.tagName === 'INPUT'
