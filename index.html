@@ -557,11 +557,21 @@
 
         async function loadComments(postId) {
             const container = document.getElementById(`comments-list-${postId}`);
+            const startedAt = performance.now();
+            console.debug('[replies] loading', { parentPostId: postId });
             try {
                 const res = await fetch(`${API_BASE}/posts?parentPostId=${postId}`, {
                     headers: getAuthHeaders()
                 });
-                const comments = await res.json();
+                const responseText = await res.text();
+                console.debug('[replies] load response', {
+                    parentPostId: postId,
+                    status: res.status,
+                    durationMs: Math.round(performance.now() - startedAt),
+                    body: responseText.slice(0, 500)
+                });
+                if (!res.ok) throw new Error(`HTTP ${res.status}: ${responseText}`);
+                const comments = responseText ? JSON.parse(responseText) : [];
 
                 container.innerHTML = '';
                 if (!comments || comments.length === 0) {
@@ -609,6 +619,8 @@
 
             if (!content) return alert("Reply cannot be empty.");
 
+            const startedAt = performance.now();
+            console.debug('[replies] sending', { parentPostId, contentLength: content.length });
             try {
                 const res = await fetch(`${API_BASE}/posts`, {
                     method: 'POST',
@@ -619,10 +631,17 @@
                     })
                 });
 
-                if (!res.ok) throw new Error(await res.text());
+                const responseText = await res.text();
+                console.debug('[replies] send response', {
+                    parentPostId,
+                    status: res.status,
+                    durationMs: Math.round(performance.now() - startedAt),
+                    body: responseText.slice(0, 500)
+                });
+                if (!res.ok) throw new Error(`HTTP ${res.status}: ${responseText}`);
 
                 input.value = '';
-                loadComments(parentPostId);
+                await loadComments(parentPostId);
             } catch (err) {
                 console.error("Error replying:", err);
                 alert("Failed to send reply: " + err.message);
