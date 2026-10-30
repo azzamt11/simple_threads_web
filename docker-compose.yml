@@ -7,5 +7,5 @@ services:
       dockerfile: Dockerfile
     container_name: threads_frontend_app
     ports:
-      - "80:80"
+      - "3001:80"
     restart: unless-stopped
