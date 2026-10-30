@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Threads CRUD</title>
+    <style>
+        :root {
+            --bg-color: #101010;
+            --card-bg: #181818;
+            --text-main: #f3f5f7;
+            --text-muted: #616161;
+            --border-color: #2a2a2a;
+            --accent: #ffffff;
+            --heart-active: #f91880;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 600px;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 24px;
+            font-size: 1.8rem;
+            letter-spacing: -0.5px;
+        }
+
+        /* Thread Compose Box */
+        .compose-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 16px;
+            margin-bottom: 20px;
+        }
+
+        textarea {
+            width: 100%;
+            background: transparent;
+            border: none;
+            color: var(--text-main);
+            font-size: 15px;
+            resize: none;
+            outline: none;
+            margin-bottom: 12px;
+            font-family: inherit;
+        }
+
+        .compose-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        select, input {
+            background: #202020;
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 13px;
+            outline: none;
+        }
+
+        button {
+            background: var(--accent);
+            color: #000;
+            border: none;
+            padding: 6px 16px;
+            border-radius: 100px;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        button:hover { opacity: 0.9; }
+
+        /* Feed Item Styles */
+        .thread-item {
+            background: var(--bg-color);
+            border-bottom: 1px solid var(--border-color);
+            padding: 16px 0;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        .thread-header {
+            display: flex;
+            justify-content: space-between;
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .author { color: var(--text-main); }
+        .actions-menu { display: flex; gap: 12px; }
+        
+        .action-text-btn {
+            background: none;
+            color: var(--text-muted);
+            font-size: 12px;
+            cursor: pointer;
+            padding: 0;
+        }
+        .action-text-btn:hover { color: var(--text-main); }
+
+        .thread-content {
+            font-size: 15px;
+            line-height: 1.4;
+            margin-bottom: 12px;
+            color: #e5e5e5;
+        }
+
+        .thread-footer {
+            display: flex;
+            gap: 16px;
+            color: var(--text-muted);
+            font-size: 13px;
+        }
+
+        .like-btn {
+            background: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-weight: normal;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .like-btn.liked { color: var(--heart-active); }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Threads</h1>
+
+        <!-- Create Post -->
+        <div class="compose-card">
+            <textarea id="postContent" placeholder="What's new?" rows="3"></textarea>
+            <div class="compose-footer">
+                <div>
+                    <label style="font-size:12px; color:var(--text-muted)">Acting User ID: </label>
+                    <input type="number" id="userIdInput" value="1" style="width: 50px;">
+                </div>
+                <button onclick="createPost()">Post</button>
+            </div>
+        </div>
+
+        <!-- Feed List -->
+        <div id="feed"></div>
+    </div>
+
+    <script>
+        const API_BASE = "http://202.155.13.19:8200";
+
+        // Fetch feed elements on execution
+        document.addEventListener("DOMContentLoaded", fetchPosts);
+
+        async function fetchPosts() {
+            try {
+                const response = await fetch(`${API_BASE}/posts`);
+                const posts = await response.json();
+                const feed = document.getElementById('feed');
+                feed.innerHTML = '';
+
+                if(!posts || posts.length === 0) {
+                    feed.innerHTML = `<p style="text-align:center;color:var(--text-muted);margin-top:20px;">No threads yet.</p>`;
+                    return;
+                }
+
+                posts.forEach(post => {
+                    const item = document.createElement('div');
+                    item.className = 'thread-item';
+                    item.innerHTML = `
+                        <div class="thread-header">
+                            <span class="author">@user_${post.user_id}</span>
+                            <div class="actions-menu">
+                                <button class="action-text-btn" onclick="editPost(${post.id}, '${post.content.replace(/'/g, "\\'")}')">Edit</button>
+                                <button class="action-text-btn" style="color:#ff3b30;" onclick="deletePost(${post.id})">Delete</button>
+                            </div>
+                        </div>
+                        <div class="thread-content">${post.content}</div>
+                        <div class="thread-footer">
+                            <button class="like-btn" onclick="toggleLike(${post.id}, ${post.user_id})">
+                                ❤️ <span>${post.like_count || 0}</span>
+                            </button>
+                        </div>
+                    `;
+                    feed.appendChild(item);
+                });
+            } catch (err) {
+                console.error("Error fetching posts:", err);
+            }
+        }
+
+        async function createPost() {
+            const content = document.getElementById('postContent').value;
+            const userId = parseInt(document.getElementById('userIdInput').value);
+
+            if (!content.trim()) return alert("Content cannot be empty");
+
+            try {
+                await fetch(`${API_BASE}/posts`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ content: content, user_id: userId })
+                });
+                document.getElementById('postContent').value = '';
+                fetchPosts();
+            } catch (err) {
+                console.error("Error creating post:", err);
+            }
+        }
+
+        async function editPost(id, currentContent) {
+            const newContent = prompt("Update your thread:", currentContent);
+            if (newContent === null || !newContent.trim()) return;
+
+            try {
+                await fetch(`${API_BASE}/posts`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id: id, content: newContent })
+                });
+                fetchPosts();
+            } catch (err) {
+                console.error("Error updating post:", err);
+            }
+        }
+
+        async function deletePost(id) {
+            if (!confirm("Delete this thread?")) return;
+
+            try {
+                await fetch(`${API_BASE}/posts/delete?id=${id}`, { method: 'DELETE' });
+                fetchPosts();
+            } catch (err) {
+                console.error("Error deleting post:", err);
+            }
+        }
+
+        async function toggleLike(postId, currentUserId) {
+            // Note: Since this is a lightweight frontend toggler mocking state transitions,
+            // we default send a Post Like event. You can wire explicit like tracking locally if preferred.
+            try {
+                await fetch(`${API_BASE}/likes`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ post_id: postId, user_id: currentUserId })
+                });
+                fetchPosts();
+            } catch (err) {
+                console.error("Error liking post:", err);
+            }
+        }
+    </script>
+</body>
+</html>
