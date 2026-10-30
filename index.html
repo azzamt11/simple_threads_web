@@ -640,11 +640,6 @@
                 trigger: clickedButton ? 'button' : 'enter-key',
                 inputId: source?.tagName === 'INPUT' ? source.id : undefined
             });
-            if (clickedButton) {
-                clickedButton.style.background = '#ffd60a';
-                clickedButton.style.color = '#000000';
-                clickedButton.textContent = 'Clicked!';
-            }
             if (!token) return alert("Please log in to reply.");
             const compose = source?.closest('.comment-compose');
             const input = source?.tagName === 'INPUT'
