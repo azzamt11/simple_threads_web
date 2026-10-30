@@ -613,6 +613,11 @@
         }
 
         async function createComment(source) {
+            const clickedButton = source?.tagName === 'BUTTON' ? source : null;
+            console.log('[replies] Reply button clicked', {
+                trigger: clickedButton ? 'button' : 'enter-key',
+                inputId: source?.tagName === 'INPUT' ? source.id : undefined
+            });
             if (!token) return alert("Please log in to reply.");
             const compose = source?.closest('.comment-compose');
             const input = source?.tagName === 'INPUT'
@@ -627,8 +632,12 @@
 
             if (!content) return alert("Reply cannot be empty.");
 
+            if (clickedButton) {
+                clickedButton.disabled = true;
+                clickedButton.textContent = 'Sending...';
+            }
             const startedAt = performance.now();
-            console.debug('[replies] sending', { parentPostId, contentLength: content.length });
+            console.log('[replies] sending reply', { parentPostId, contentLength: content.length });
             try {
                 const res = await fetch(`${API_BASE}/posts`, {
                     method: 'POST',
@@ -653,6 +662,11 @@
             } catch (err) {
                 console.error("Error replying:", err);
                 alert("Failed to send reply: " + err.message);
+            } finally {
+                if (clickedButton) {
+                    clickedButton.disabled = false;
+                    clickedButton.textContent = 'Reply';
+                }
             }
         }
 
